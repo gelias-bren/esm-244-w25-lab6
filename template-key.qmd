@@ -16,6 +16,7 @@ library(tidyverse)
 library(ggcorrplot)
 library(knitr)
 library(kableExtra)
+library(ranger)
 ```
 
 ## Random Forests
@@ -68,9 +69,9 @@ mom %>%
   summarize(n = n()) |> 
   ungroup() |> 
   mutate(prop = n / sum(n)) |> 
-  mutate(prop=scales::percent(prop)) |> 
-  kable(col.names = c("Risk Level","Number of Women","% of Total")) |> 
-  kable_styling()
+  mutate(prop=scales::percent(prop)) |>  # Use for HW
+  kable(col.names = c("Risk Level","Number of Women","% of Total")) |> # controls how to design table
+  kable_styling() # Makes it look relaitvely clean relatively fast
 ```
 
 
@@ -123,7 +124,7 @@ The data is clean for now. We'll just use the correlation threshold to remove an
 ```{r}
 mom_recipe <- recipe(risk_level ~ ., data = mom_train) |> 
   step_zv(all_predictors()) |> 
-  step_corr(all_predictors(), threshold = 0.9)
+  step_corr(all_predictors(), threshold = 0.9) # 
 ```
 
 
@@ -135,7 +136,7 @@ We'll use the `ranger` engine for this model. It is a fast implementation of ran
 ```{r}
 rf_spec <- rand_forest(trees = 1000, 
                        mtry = tune(),
-                       min_n=tune()) |>
+                       min_n = tune()) |>
   set_engine("ranger") |>
   set_mode("classification")
 
@@ -226,7 +227,7 @@ We take our finalized model and add the measure of importance we want to evaluat
 rf_final |>
   set_engine('ranger',importance='permutation') |> 
   fit(risk_level~.,
-      data=juice(prep(mom_recipe))) |> 
+      data=juice(prep(mom_recipe))) |> # juice 
   vip::vip(geom='point')
 
 ```
